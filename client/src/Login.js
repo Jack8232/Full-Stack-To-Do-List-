@@ -7,6 +7,7 @@ function Login() {
 
     const [email,setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loginError, setLoginError] = useState(false);
 
     const user = useContext(UserContext);
 
@@ -19,11 +20,17 @@ function Login() {
             user.setEmail(response.data.email);
             setEmail('');
             setPassword('');
-        });
-    }
+        })
+        .catch(() => {
+            setLoginError(true);
+    });
+}
 
     return (
         <form action="" onSubmit={e => loginUser(e)}>
+            {loginErro && (
+                <div>LOGIN ERROR WRONG EMAIL OR PASSWORD</div>
+            )}
             <input 
             type="email" 
             placeholder="email..." 

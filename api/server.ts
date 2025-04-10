@@ -105,7 +105,7 @@ app.post('/login', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<
           }
         );
       } else {
-        res.status(401).json({ message: 'Invalid credentials' });
+        res.status(401);
       }
     })
     .catch(err => {
