@@ -33,7 +33,7 @@ app.use(cors ({
 }));
 
 type Params = {};
-type ResBody = { message: string };
+type ResBody = { message?: string; id?: string; email?: string };
 type ReqQuery = {};
 // Locals can be defined but not passed directly to Response unless customized
 type Locals = { user?: string };
@@ -44,16 +44,42 @@ app.get(
     res.json({message: 'ok'})
   });
 
+  //save cookie and token information for page refresh
+  //if page is refreshed the user is logged out
+app.get('/user', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
+  const payload = jwt.verify(req.cookies.token, secret) as { id: string };
+  User.findById(payload.id)
+    .then(userInfo => {
+      if (!userInfo) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      res.json({ 
+        id: (userInfo._id as any).toString(),
+        email: userInfo.email
+      });
+    })
+});
+
+
 app.post('/register', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
   const { email, password } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
   const user = new User({password: hashedPassword, email})
   user.save().then(userInfo => {
-    jwt.sign({id:userInfo._id, email:userInfo.email}, })
+    jwt.sign({id:userInfo._id, email:userInfo.email}, secret, (err: Error | null, token: string | undefined) => {
+      if (err) {
+        console.log(err)
+        res.sendStatus(500);
+      } else {
+        res.cookie('token', token).json({id: (userInfo._id as any).toString(), email: userInfo.email});
+      }
+    })
     
   });
 });
 
+
 app.listen(4000, () => {
   console.log('Server is running on port 4000');
 });
+
