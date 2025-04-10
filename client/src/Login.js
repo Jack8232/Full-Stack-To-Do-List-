@@ -28,7 +28,7 @@ function Login() {
 
     return (
         <form action="" onSubmit={e => loginUser(e)}>
-            {loginErro && (
+            {loginError && (
                 <div>LOGIN ERROR WRONG EMAIL OR PASSWORD</div>
             )}
             <input 
