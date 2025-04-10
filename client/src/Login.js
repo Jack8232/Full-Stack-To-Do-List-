@@ -17,6 +17,8 @@ function Login() {
         axios.post('http://localhost:4000/login', data, {withCredentials:true})
         .then(response => {
             user.setEmail(response.data.email);
+            setEmail('');
+            setPassword('');
         });
     }
 

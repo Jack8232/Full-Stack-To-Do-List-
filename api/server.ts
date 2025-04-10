@@ -73,10 +73,51 @@ app.post('/register', (req: Request<Params, ResBody, any, ReqQuery>, res: Respon
       } else {
         res.cookie('token', token).json({id: (userInfo._id as any).toString(), email: userInfo.email});
       }
-    })
+    });
     
   });
 });
+
+app.post('/login', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
+  const {email, password} = req.body;
+  User.findOne({email})
+    .then(userInfo => {
+      if (!userInfo) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+      
+      // We've checked userInfo is not null above, so we're safe to use it
+      const passOk = bcrypt.compareSync(password, userInfo.password);
+      if (passOk) {
+        jwt.sign(
+          {id: userInfo._id, email}, 
+          secret, 
+          (err: Error | null, token: string | undefined) => {
+            if (err) {
+              console.log(err);
+              res.status(500).json({ message: 'Error generating token' });
+            } else {
+              res.cookie('token', token).json({
+                id: (userInfo._id as any).toString(), 
+                email: userInfo.email
+              });
+            }
+          }
+        );
+      } else {
+        res.status(401).json({ message: 'Invalid credentials' });
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({ message: 'Server error' });
+    });
+});
+
+app.post('/logout', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
+  res.cookie('token', '').send();
+});
+
 
 
 app.listen(4000, () => {

@@ -6,6 +6,7 @@ import axios from 'axios';
 import Register from "./Register";
 import UserContext from "./UserContext";
 import Login from "./Login";
+import Button from '@mui/material/Button';
 
 
 function App() {
@@ -18,13 +19,24 @@ function App() {
     });
   }, []);
 
+  function logout() {
+    axios.post('http://localhost:4000/logout', {}, {withCredentials:true})
+    .then(() => setEmail(''))
+  }
+
   return (
     <UserContext.Provider value={{email, setEmail}}>
       <div>
       <BrowserRouter>
       <div>
         {!!email && (
-          <div>Logged in as {email}</div>
+          <div>
+            Logged in as {email}
+            <Button onClick={() => logout()}>
+              Log Out
+            </Button>
+            </div>
+            
         )}
         {!email && (
           <div>Not logged in</div>
