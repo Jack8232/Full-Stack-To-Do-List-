@@ -24,7 +24,7 @@ cd Full-Stack-To-Do-List-
 Make sure MongoDB is running on your local machine:
 
 ```bash
-# Start MongoDB (if not running as a service)
+# Start MongoDB if it is not running
 mongod
 ```
 
@@ -55,7 +55,7 @@ cd client
 npm install axios @mui/material @emotion/react @emotion/styled web-vitals
 
 
-# Start the frontend server
+# Start the frontend server 
 npm start
 ```
 
