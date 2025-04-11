@@ -38,7 +38,7 @@ cd api
 npm install
 
 # Start the backend server
-npm start
+npm run dev
 ```
 
 The backend server will start on http://localhost:4000.
@@ -52,7 +52,8 @@ Open a new terminal window:
 cd client
 
 # Install dependencies
-npm install
+npm install axios @mui/material @emotion/react @emotion/styled web-vitals
+
 
 # Start the frontend server
 npm start
