@@ -26,10 +26,11 @@ function Login() {
             setPassword('');
             setRedirect(true);
         })
-        .catch(() => {
+        .catch(error => {
+            console.log("Login error:", error);
             setLoginError(true);
-    });
-}
+        });
+    }
 
 if (redirect) {
     return <Navigate to={'/'} replace={true} />
@@ -38,7 +39,17 @@ if (redirect) {
     return (
         <form action="" onSubmit={e => loginUser(e)}>
             {loginError && (
-                <div>LOGIN ERROR WRONG EMAIL OR PASSWORD</div>
+                <div style={{
+                    color: 'white',
+                    backgroundColor: 'red',
+                    padding: '10px',
+                    borderRadius: '5px',
+                    marginBottom: '15px',
+                    fontWeight: 'bold',
+                    textAlign: 'center'
+                }}>
+                    LOGIN ERROR: WRONG EMAIL OR PASSWORD
+                </div>
             )}
             <input 
             type="email" 

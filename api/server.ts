@@ -41,9 +41,8 @@ app.use(cors ({
 }));
 
 type Params = {};
-type ResBody = { message?: string; id?: string; email?: string };
+type ResBody = { message?: string; id?: string; email?: string; username?: string };
 type ReqQuery = {};
-// Locals can be defined but not passed directly to Response unless customized
 type Locals = { user?: string };
 
 app.get(
@@ -52,11 +51,9 @@ app.get(
     res.json({message: 'ok'})
   });
 
-  //save cookie and token information for page refresh
-  //if page is refreshed the user is logged out
+  
 app.get('/user', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
   try {
-    // Check if token exists
     if (!req.cookies.token) {
       return res.status(401).json({ message: 'Authentication required' });
     }
@@ -69,7 +66,8 @@ app.get('/user', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<Re
         }
         res.json({ 
           id: (userInfo._id as any).toString(),
-          email: userInfo.email
+          email: userInfo.email,
+          username: userInfo.username
         });
       })
       .catch(err => {
@@ -77,7 +75,7 @@ app.get('/user', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<Re
         res.status(500).json({ message: 'Server error' });
       });
   } catch (err) {
-    // This catches JWT verification errors (invalid token, expired token, etc.)
+    // this catches JWT verification errors giving me trouble
     console.error('JWT verification error:', err);
     res.status(401).json({ message: 'Invalid or expired token' });
   }
@@ -85,20 +83,40 @@ app.get('/user', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<Re
 
 
 app.post('/register', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
-  const { email, password } = req.body;
+  const { email, password, username } = req.body;
+  
+  // validate request
+  if (!email || !password || !username) {
+    return res.status(400).json({ message: 'Email, password and username are required' });
+  }
+  
   const hashedPassword = bcrypt.hashSync(password, 10);
-  const user = new User({password: hashedPassword, email})
-  user.save().then(userInfo => {
-    jwt.sign({id:userInfo._id, email:userInfo.email}, secret, (err: Error | null, token: string | undefined) => {
-      if (err) {
-        console.log(err)
-        res.sendStatus(500);
+  const user = new User({ password: hashedPassword, email, username });
+  
+  user.save()
+    .then(userInfo => {
+      jwt.sign({ id: userInfo._id, email: userInfo.email }, secret, 
+        (err: Error | null, token: string | undefined) => {
+          if (err) {
+            console.log(err);
+            res.status(500).json({ message: 'Error generating token' });
+          } else {
+            res.cookie('token', token).json({
+              id: (userInfo._id as any).toString(), 
+              email: userInfo.email,
+              username: userInfo.username
+            });
+          }
+        });
+    })
+    .catch(err => {
+      console.error('Registration error:', err);
+      if (err.code === 11000) { 
+        res.status(409).json({ message: 'Email already in use' });
       } else {
-        res.cookie('token', token).json({id: (userInfo._id as any).toString(), email: userInfo.email});
+        res.status(500).json({ message: 'Error creating user' });
       }
     });
-    
-  });
 });
 
 app.post('/login', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
@@ -108,8 +126,8 @@ app.post('/login', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<
       if (!userInfo) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
-      
-      // We've checked userInfo is not null above, so we're safe to use it
+
+      //check for null user info
       const passOk = bcrypt.compareSync(password, userInfo.password);
       if (passOk) {
         jwt.sign(
@@ -122,13 +140,14 @@ app.post('/login', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<
             } else {
               res.cookie('token', token).json({
                 id: (userInfo._id as any).toString(), 
-                email: userInfo.email
+                email: userInfo.email,
+                username: userInfo.username
               });
             }
           }
         );
       } else {
-        res.status(401);
+        res.status(401).json({ message: 'Invalid credentials' });
       }
     })
     .catch(err => {
@@ -146,7 +165,7 @@ app.post('/logout', (req: Request<Params, ResBody, any, ReqQuery>, res: Response
 
   app.get('/todos', (req: Request<Params, ResBody, any, ReqQuery>, res: Response) => {
     try {
-      // Check if token exists
+      // check for token
       if (!req.cookies.token) {
         return res.status(401).json({ message: 'Authentication required' });
       }
@@ -162,7 +181,6 @@ app.post('/logout', (req: Request<Params, ResBody, any, ReqQuery>, res: Response
           res.status(500).json({ message: 'Server error' });
         });
     } catch (err) {
-      // This catches JWT verification errors (invalid token, expired token, etc.)
       console.error('JWT verification error:', err);
       res.status(401).json({ message: 'Invalid or expired token' });
     }
@@ -172,7 +190,6 @@ app.post('/logout', (req: Request<Params, ResBody, any, ReqQuery>, res: Response
 
 app.put('/todos', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
   try {
-    // Check if token exists
     if (!req.cookies.token) {
       return res.status(401).json({ message: 'Authentication required' });
     }
@@ -193,16 +210,14 @@ app.put('/todos', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<R
         res.status(500).json({ message: 'Error saving todo' });
       });
   } catch (err) {
-    // This catches JWT verification errors (invalid token, expired token, etc.)
     console.error('JWT verification error:', err);
     res.status(401).json({ message: 'Invalid or expired token' });
   }
 });
 
-// Update a todo
+// update a todo
 app.patch('/todos/:id', (req: Request, res: Response) => {
   try {
-    // Check if token exists
     if (!req.cookies.token) {
       return res.status(401).json({ message: 'Authentication required' });
     }
@@ -211,16 +226,14 @@ app.patch('/todos/:id', (req: Request, res: Response) => {
     const { id } = req.params;
     const { text, done } = req.body;
     
-    // Update only fields that are provided
     const updateData: {text?: string; done?: boolean} = {};
     if (text !== undefined) updateData.text = text;
     if (done !== undefined) updateData.done = done;
     
-    // Find and update the todo, ensuring it belongs to the authenticated user
     Todo.findOneAndUpdate(
       { _id: id, user: new mongoose.Types.ObjectId(payload.id) },
       updateData,
-      { new: true } // Return the updated document
+      { new: true } 
     )
       .then(updatedTodo => {
         if (!updatedTodo) {
@@ -238,10 +251,8 @@ app.patch('/todos/:id', (req: Request, res: Response) => {
   }
 });
 
-// Delete a todo
 app.delete('/todos/:id', (req: Request, res: Response) => {
   try {
-    // Check if token exists
     if (!req.cookies.token) {
       return res.status(401).json({ message: 'Authentication required' });
     }
@@ -249,7 +260,6 @@ app.delete('/todos/:id', (req: Request, res: Response) => {
     const payload = jwt.verify(req.cookies.token, secret) as UserPayload;
     const { id } = req.params;
     
-    // Find and delete the todo, ensuring it belongs to the authenticated user
     Todo.findOneAndDelete({ _id: id, user: new mongoose.Types.ObjectId(payload.id) })
       .then(deletedTodo => {
         if (!deletedTodo) {
