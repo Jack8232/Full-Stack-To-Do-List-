@@ -41,7 +41,7 @@ app.use(cors ({
 }));
 
 type Params = {};
-type ResBody = { message?: string; id?: string; email?: string };
+type ResBody = { message?: string; id?: string; email?: string; username?: string };
 type ReqQuery = {};
 // Locals can be defined but not passed directly to Response unless customized
 type Locals = { user?: string };
@@ -69,7 +69,8 @@ app.get('/user', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<Re
         }
         res.json({ 
           id: (userInfo._id as any).toString(),
-          email: userInfo.email
+          email: userInfo.email,
+          username: userInfo.username
         });
       })
       .catch(err => {
@@ -85,20 +86,40 @@ app.get('/user', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<Re
 
 
 app.post('/register', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
-  const { email, password } = req.body;
+  const { email, password, username } = req.body;
+  
+  // Validate request
+  if (!email || !password || !username) {
+    return res.status(400).json({ message: 'Email, password and username are required' });
+  }
+  
   const hashedPassword = bcrypt.hashSync(password, 10);
-  const user = new User({password: hashedPassword, email})
-  user.save().then(userInfo => {
-    jwt.sign({id:userInfo._id, email:userInfo.email}, secret, (err: Error | null, token: string | undefined) => {
-      if (err) {
-        console.log(err)
-        res.sendStatus(500);
+  const user = new User({ password: hashedPassword, email, username });
+  
+  user.save()
+    .then(userInfo => {
+      jwt.sign({ id: userInfo._id, email: userInfo.email }, secret, 
+        (err: Error | null, token: string | undefined) => {
+          if (err) {
+            console.log(err);
+            res.status(500).json({ message: 'Error generating token' });
+          } else {
+            res.cookie('token', token).json({
+              id: (userInfo._id as any).toString(), 
+              email: userInfo.email,
+              username: userInfo.username
+            });
+          }
+        });
+    })
+    .catch(err => {
+      console.error('Registration error:', err);
+      if (err.code === 11000) { // Duplicate key error
+        res.status(409).json({ message: 'Email already in use' });
       } else {
-        res.cookie('token', token).json({id: (userInfo._id as any).toString(), email: userInfo.email});
+        res.status(500).json({ message: 'Error creating user' });
       }
     });
-    
-  });
 });
 
 app.post('/login', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
@@ -122,13 +143,14 @@ app.post('/login', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<
             } else {
               res.cookie('token', token).json({
                 id: (userInfo._id as any).toString(), 
-                email: userInfo.email
+                email: userInfo.email,
+                username: userInfo.username
               });
             }
           }
         );
       } else {
-        res.status(401);
+        res.status(401).json({ message: 'Invalid credentials' });
       }
     })
     .catch(err => {

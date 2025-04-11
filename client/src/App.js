@@ -12,16 +12,21 @@ import Home from './Home.js'
 
 function App() {
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
 
   useEffect(() => {
     axios.get('http://localhost:4000/user', {withCredentials:true})
     .then(response => {
+      console.log("User data from server:", response.data);
       setEmail(response.data.email);
+      setUsername(response.data.username || '');
+      console.log("Username set to:", response.data.username);
     })
     .catch(error => {
       // Clear email state on auth errors (401, 403) or server errors (500)
       if (error.response && [401, 403, 500].includes(error.response.status)) {
         setEmail('');
+        setUsername('');
         console.log('Authentication error:', error.response.data.message || 'Session expired');
       } else {
         console.error('Error fetching user data:', error);
@@ -31,11 +36,16 @@ function App() {
 
   function logout() {
     axios.post('http://localhost:4000/logout', {}, {withCredentials:true})
-    .then(() => setEmail(''))
+    .then(() => {
+      setEmail('');
+      setUsername('');
+    })
   }
 
+  console.log("App render - Current user context:", { email, username });
+
   return (
-    <UserContext.Provider value={{email, setEmail}}>
+    <UserContext.Provider value={{email, setEmail, username, setUsername}}>
       <BrowserRouter>
       <nav>
         <Link to={'/'}>Homepage</Link>

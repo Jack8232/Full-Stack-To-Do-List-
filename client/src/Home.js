@@ -1,14 +1,20 @@
 import {useContext, useState, useEffect} from "react";
 import UserContext from "./UserContext";
 import axios from 'axios';
-
+import { Typography } from '@mui/material';
 
 function Home() {
     const userInfo = useContext(UserContext);
+    console.log("UserInfo in Home component:", userInfo); // Debug log
+    
     const [inputVal, setInputVal] = useState('');
     const [todo, setTodos] = useState([]);
     const [editingId, setEditingId] = useState(null);
     const [editText, setEditText] = useState('');
+    
+    // Directly access username from the context
+    const username = userInfo.username;
+    console.log("Username value:", username);
 
     useEffect(() => {
         if (userInfo.email) {
@@ -98,7 +104,10 @@ function Home() {
 
     return <div>
         <form onSubmit={e => {addTodo(e)}}>
-            <input placeholder={'What would you like to do?'} 
+            <div style={{fontSize: '24px', color: '#3f51b5', marginBottom: '15px', textAlign: 'center', fontWeight: 'bold'}}>
+                {username ? `${username}'s Todo List` : 'My Todo List'}
+            </div>
+            <input placeholder={'Add Task...'} 
             value={inputVal} 
             onChange={e => setInputVal(e.target.value)}/>
         </form>
