@@ -7,7 +7,7 @@ import Register from "./Register";
 import UserContext from "./UserContext";
 import Login from "./Login";
 import Button from '@mui/material/Button';
-import Home from './Home'
+import Home from './Home.js'
 
 
 function App() {

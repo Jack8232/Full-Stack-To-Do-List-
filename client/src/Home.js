@@ -7,6 +7,8 @@ function Home() {
     const userInfo = useContext(UserContext);
     const [inputVal, setInputVal] = useState('');
     const [todo, setTodos] = useState([]);
+    const [editingId, setEditingId] = useState(null);
+    const [editText, setEditText] = useState('');
 
     useEffect(() => {
         if (userInfo.email) {
@@ -58,22 +60,82 @@ function Home() {
             setTodos([...newTodos]);
         });
     }
+
+    function startEditing(todoItem) {
+        setEditingId(todoItem._id);
+        setEditText(todoItem.text);
+    }
+
+    function cancelEditing() {
+        setEditingId(null);
+        setEditText('');
+    }
+
+    function saveEdit(todoItem) {
+        // Don't save empty todos
+        if (editText.trim() === '') return;
+        
+        // First update the UI optimistically
+        const newTodos = todo.map(item => 
+            item._id === todoItem._id ? {...item, text: editText} : item
+        );
+        setTodos(newTodos);
+        
+        // Then update on the server
+        axios.patch(`http://localhost:4000/todos/${todoItem._id}`, {
+            text: editText
+        }, {withCredentials: true})
+        .then(() => {
+            setEditingId(null);
+            setEditText('');
+        })
+        .catch(error => {
+            console.error('Error updating todo text:', error);
+            // Revert the optimistic update if the server request fails
+            setTodos(todo);
+        });
+    }
+
     return <div>
         <form onSubmit={e => {addTodo(e)}}>
             <input placeholder={'What would you like to do?'} 
             value={inputVal} 
             onChange={e => setInputVal(e.target.value)}/>
-
         </form>
         <ul>
             {todo.map((todoItem, index) => (
-                <li key={index}>
+                <li key={todoItem._id || index}>
                     <input 
                         type={'checkbox'} 
                         checked={todoItem.done}
                         onChange={() => toggleTodo(index)}
                     />
-                    {todoItem.text}
+                    
+                    {editingId === todoItem._id ? (
+                        <>
+                            <input 
+                                type="text" 
+                                value={editText} 
+                                onChange={e => setEditText(e.target.value)} 
+                                autoFocus
+                            />
+                            <button onClick={() => saveEdit(todoItem)}>Save</button>
+                            <button onClick={cancelEditing}>Cancel</button>
+                        </>
+                    ) : (
+                        <>
+                            <span 
+                                style={{
+                                    textDecoration: todoItem.done ? 'line-through' : 'none',
+                                    marginLeft: '10px',
+                                    marginRight: '10px'
+                                }}
+                            >
+                                {todoItem.text}
+                            </span>
+                            <button onClick={() => startEditing(todoItem)}>Edit</button>
+                        </>
+                    )}
                 </li>
             ))}
         </ul>
