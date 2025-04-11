@@ -1,6 +1,8 @@
 import {useState, useContext} from 'react';
 import axios from 'axios';
 import UserContext from "./UserContext";
+import {Navigate} from 'react-router-dom';
+
 
 
 function Login() {
@@ -8,6 +10,8 @@ function Login() {
     const [email,setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loginError, setLoginError] = useState(false);
+    const [redirect, setRedirect] = useState(false);
+    
 
     const user = useContext(UserContext);
 
@@ -20,12 +24,17 @@ function Login() {
             user.setEmail(response.data.email);
             setEmail('');
             setPassword('');
+            setRedirect(true);
         })
         .catch(() => {
             setLoginError(true);
     });
 }
-//adding a comment here
+
+if (redirect) {
+    return <Navigate to={'/'} replace={true} />
+}
+
     return (
         <form action="" onSubmit={e => loginUser(e)}>
             {loginError && (

@@ -7,6 +7,7 @@ import Register from "./Register";
 import UserContext from "./UserContext";
 import Login from "./Login";
 import Button from '@mui/material/Button';
+import Home from './Home'
 
 
 function App() {
@@ -16,6 +17,15 @@ function App() {
     axios.get('http://localhost:4000/user', {withCredentials:true})
     .then(response => {
       setEmail(response.data.email);
+    })
+    .catch(error => {
+      // Clear email state on auth errors (401, 403) or server errors (500)
+      if (error.response && [401, 403, 500].includes(error.response.status)) {
+        setEmail('');
+        console.log('Authentication error:', error.response.data.message || 'Session expired');
+      } else {
+        console.error('Error fetching user data:', error);
+      }
     });
   }, []);
 
@@ -26,36 +36,28 @@ function App() {
 
   return (
     <UserContext.Provider value={{email, setEmail}}>
-      <div>
       <BrowserRouter>
-      <div>
-        {!!email && (
-          <div>
-            Logged in as {email}
-            <Button onClick={() => logout()}>
-              Log Out
-            </Button>
-            </div>
-            
-        )}
+      <nav>
+        <Link to={'/'}>Homepage</Link>
         {!email && (
-          <div>Not logged in</div>
+          <>
+            <Link to={'/login'}>Login</Link>
+            <Link to={'/register'}>Register</Link>
+          </>
+        )}
+        {!!email && (
+          <a onClick={e => {e.preventDefault();logout()}}>Logout</a>
         )}
 
-      </div>
-      <hr/>
-      <div>
-        <Link to={'/'}>Home</Link> |  
-        <Link to={'/login'}>Login</Link>|  
-        <Link to={'/register'}>Register</Link>
-      </div>
+      </nav>
+      <main>
       <Routes>
-        <Route path={'/register'} element={<Register />}/>
-        <Route path={'/login'} element={<Login />}/>
+        <Route path='/' element={<Home/>} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
-      <hr/>
+      </main>
       </BrowserRouter>
-    </div>
     </UserContext.Provider>
   );
 }
