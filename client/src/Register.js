@@ -20,7 +20,7 @@ function Register() {
         setRegisterError(false);
 
         const data = {email, password, username}
-        axios.post('http://localhost:4000/register', data, {withCredentials:true})
+        axios.post('http://localhost:4000/api/register', data, {withCredentials:true})
         .then(response => {
             user.setEmail(response.data.email);
             setEmail('');

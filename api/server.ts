@@ -52,7 +52,7 @@ app.get(
   });
 
   
-app.get('/user', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
+app.get('/api/user', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
   try {
     if (!req.cookies.token) {
       return res.status(401).json({ message: 'Authentication required' });
@@ -82,7 +82,7 @@ app.get('/user', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<Re
 });
 
 
-app.post('/register', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
+app.post('/api/register', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
   const { email, password, username } = req.body;
   
   // validate request
@@ -119,7 +119,7 @@ app.post('/register', (req: Request<Params, ResBody, any, ReqQuery>, res: Respon
     });
 });
 
-app.post('/login', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
+app.post('/api/login', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
   const {email, password} = req.body;
   User.findOne({email})
     .then(userInfo => {
@@ -156,14 +156,14 @@ app.post('/login', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<
     });
 });
 
-app.post('/logout', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
+app.post('/api/logout', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
   res.cookie('token', '').send();
 });
 
 
 
 
-  app.get('/todos', (req: Request<Params, ResBody, any, ReqQuery>, res: Response) => {
+  app.get('/api/tasks', (req: Request<Params, ResBody, any, ReqQuery>, res: Response) => {
     try {
       // check for token
       if (!req.cookies.token) {
@@ -188,7 +188,7 @@ app.post('/logout', (req: Request<Params, ResBody, any, ReqQuery>, res: Response
 
 
 
-app.put('/todos', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
+app.post('/api/tasks', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<ResBody>) => {
   try {
     if (!req.cookies.token) {
       return res.status(401).json({ message: 'Authentication required' });
@@ -216,7 +216,7 @@ app.put('/todos', (req: Request<Params, ResBody, any, ReqQuery>, res: Response<R
 });
 
 // update a todo
-app.patch('/todos/:id', (req: Request, res: Response) => {
+app.put('/api/tasks/:id', (req: Request, res: Response) => {
   try {
     if (!req.cookies.token) {
       return res.status(401).json({ message: 'Authentication required' });
@@ -251,7 +251,7 @@ app.patch('/todos/:id', (req: Request, res: Response) => {
   }
 });
 
-app.delete('/todos/:id', (req: Request, res: Response) => {
+app.delete('/api/tasks/:id', (req: Request, res: Response) => {
   try {
     if (!req.cookies.token) {
       return res.status(401).json({ message: 'Authentication required' });

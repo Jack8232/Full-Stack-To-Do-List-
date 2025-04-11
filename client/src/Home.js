@@ -5,20 +5,19 @@ import { Typography } from '@mui/material';
 
 function Home() {
     const userInfo = useContext(UserContext);
-    console.log("UserInfo in Home component:", userInfo); // Debug log
+    console.log("UserInfo in Home component:", userInfo); // debug log
     
     const [inputVal, setInputVal] = useState('');
     const [todo, setTodos] = useState([]);
     const [editingId, setEditingId] = useState(null);
     const [editText, setEditText] = useState('');
     
-    // Directly access username from the context
     const username = userInfo.username;
     console.log("Username value:", username);
 
     useEffect(() => {
         if (userInfo.email) {
-            axios.get('http://localhost:4000/todos', {withCredentials:true})
+            axios.get('http://localhost:4000/api/tasks', {withCredentials:true})
                 .then(response => {
                     setTodos(response.data);
                 })
@@ -34,11 +33,10 @@ function Home() {
     }
     function addTodo(e){
         e.preventDefault();
-        if (inputVal.trim() === '') return; // Don't add empty todos
+        if (inputVal.trim() === '') return; // don't add empty todos
         
-        axios.put('http://localhost:4000/todos', {text:inputVal}, {withCredentials:true})
+        axios.post('http://localhost:4000/api/tasks', {text:inputVal}, {withCredentials:true})
         .then(response => {
-            // Add the new todo from the server response (includes _id and other fields)
             setTodos([...todo, response.data]);
             setInputVal('');
         })
@@ -51,17 +49,14 @@ function Home() {
         const todoItem = newTodos[index];
         const newDoneStatus = !todoItem.done;
 
-        // First update the UI optimistically
         newTodos[index].done = newDoneStatus;
         setTodos(newTodos);
 
-        // Then update on the server
-        axios.patch(`http://localhost:4000/todos/${todoItem._id}`, {
+        axios.put(`http://localhost:4000/api/tasks/${todoItem._id}`, {
             done: newDoneStatus
         }, {withCredentials: true})
         .catch(error => {
             console.error('Error updating todo:', error);
-            // Revert the optimistic update if the server request fails
             newTodos[index].done = !newDoneStatus;
             setTodos([...newTodos]);
         });
@@ -78,17 +73,14 @@ function Home() {
     }
 
     function saveEdit(todoItem) {
-        // Don't save empty todos
         if (editText.trim() === '') return;
         
-        // First update the UI optimistically
         const newTodos = todo.map(item => 
             item._id === todoItem._id ? {...item, text: editText} : item
         );
         setTodos(newTodos);
         
-        // Then update on the server
-        axios.patch(`http://localhost:4000/todos/${todoItem._id}`, {
+        axios.put(`http://localhost:4000/api/tasks/${todoItem._id}`, {
             text: editText
         }, {withCredentials: true})
         .then(() => {
@@ -97,21 +89,17 @@ function Home() {
         })
         .catch(error => {
             console.error('Error updating todo text:', error);
-            // Revert the optimistic update if the server request fails
             setTodos(todo);
         });
     }
 
     function deleteTodo(todoItem) {
-        // Update UI optimistically
         const newTodos = todo.filter(item => item._id !== todoItem._id);
         setTodos(newTodos);
         
-        // Delete on the server
-        axios.delete(`http://localhost:4000/todos/${todoItem._id}`, {withCredentials: true})
+        axios.delete(`http://localhost:4000/api/tasks/${todoItem._id}`, {withCredentials: true})
         .catch(error => {
             console.error('Error deleting todo:', error);
-            // Revert the optimistic update if the server request fails
             setTodos(todo);
         });
     }

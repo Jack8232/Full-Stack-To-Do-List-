@@ -14,12 +14,11 @@ function App() {
   const [username, setUsername] = useState('');
 
   useEffect(() => {
-    // Add styling to body element to ensure background color covers the entire page
-    document.body.style.backgroundColor = 'rgb(169, 169, 169)';
+    document.body.style.backgroundColor = 'rgb(200, 200, 200)';
     document.body.style.margin = '0';
     document.body.style.minHeight = '100vh';
     
-    axios.get('http://localhost:4000/user', {withCredentials:true})
+    axios.get('http://localhost:4000/api/user', {withCredentials:true})
     .then(response => {
       console.log("User data from server:", response.data);
       setEmail(response.data.email);
@@ -27,7 +26,6 @@ function App() {
       console.log("Username set to:", response.data.username);
     })
     .catch(error => {
-      // Clear email state on auth errors (401, 403) or server errors (500)
       if (error.response && [401, 403, 500].includes(error.response.status)) {
         setEmail('');
         setUsername('');
@@ -39,7 +37,7 @@ function App() {
   }, []);
 
   function logout() {
-    axios.post('http://localhost:4000/logout', {}, {withCredentials:true})
+    axios.post('http://localhost:4000/api/logout', {}, {withCredentials:true})
     .then(() => {
       setEmail('');
       setUsername('');
